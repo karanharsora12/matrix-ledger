@@ -1,25 +1,28 @@
 // Typed API client with error handling
 
-const API_BASE = '/api';
+const getApiBaseUrl = (): string => {
+  const envUrl = String(import.meta.env.VITE_API_URL);
+  const cleanUrl = envUrl.trim().replace(/\/+$/, "");
+  return cleanUrl.endsWith("/api") ? cleanUrl : `${cleanUrl}/api`;
+};
+
+const API_BASE = getApiBaseUrl();
 
 export class ApiError extends Error {
   constructor(
     public status: number,
     message: string,
-    public errors?: Record<string, string[]>
+    public errors?: Record<string, string[]>,
   ) {
     super(message);
-    this.name = 'ApiError';
+    this.name = "ApiError";
   }
 }
 
-async function request<T>(
-  path: string,
-  options?: RequestInit
-): Promise<T> {
+async function request<T>(path: string, options?: RequestInit): Promise<T> {
   const res = await fetch(`${API_BASE}${path}`, {
     headers: {
-      'Content-Type': 'application/json',
+      "Content-Type": "application/json",
       ...options?.headers,
     },
     ...options,
@@ -34,8 +37,8 @@ async function request<T>(
   }
 
   // Handle CSV / non-JSON responses
-  const contentType = res.headers.get('content-type') ?? '';
-  if (contentType.includes('text/csv') || contentType.includes('text/plain')) {
+  const contentType = res.headers.get("content-type") ?? "";
+  if (contentType.includes("text/csv") || contentType.includes("text/plain")) {
     return res.text() as unknown as T;
   }
 
@@ -45,19 +48,19 @@ async function request<T>(
 export const api = {
   get: <T>(path: string) => request<T>(path),
   post: <T>(path: string, body: unknown) =>
-    request<T>(path, { method: 'POST', body: JSON.stringify(body) }),
+    request<T>(path, { method: "POST", body: JSON.stringify(body) }),
   put: <T>(path: string, body: unknown) =>
-    request<T>(path, { method: 'PUT', body: JSON.stringify(body) }),
-  delete: <T>(path: string) => request<T>(path, { method: 'DELETE' }),
+    request<T>(path, { method: "PUT", body: JSON.stringify(body) }),
+  delete: <T>(path: string) => request<T>(path, { method: "DELETE" }),
   download: (path: string) =>
     fetch(`${API_BASE}${path}`).then(async (res) => {
-      if (!res.ok) throw new ApiError(res.status, 'Download failed');
+      if (!res.ok) throw new ApiError(res.status, "Download failed");
       const blob = await res.blob();
-      const cd = res.headers.get('content-disposition') ?? '';
+      const cd = res.headers.get("content-disposition") ?? "";
       const match = cd.match(/filename="?([^"]+)"?/);
-      const filename = match?.[1] ?? 'export.csv';
+      const filename = match?.[1] ?? "export.csv";
       const url = URL.createObjectURL(blob);
-      const a = document.createElement('a');
+      const a = document.createElement("a");
       a.href = url;
       a.download = filename;
       a.click();
@@ -83,11 +86,11 @@ export interface Customer {
   mobile: string | null;
   address: string | null;
   openingBalance: string;
-  openingBalanceType: 'dr' | 'cr';
+  openingBalanceType: "dr" | "cr";
   notes: string | null;
   isActive: boolean;
   currentBalance?: string;
-  currentBalanceType?: 'dr' | 'cr';
+  currentBalanceType?: "dr" | "cr";
   lastTransaction?: string | null;
   createdAt: string;
   updatedAt: string;
@@ -108,7 +111,7 @@ export interface Bill {
   totalAmount: string;
   amountReceived: string;
   balanceDue: string;
-  status: 'unpaid' | 'partial' | 'paid';
+  status: "unpaid" | "partial" | "paid";
   notes: string | null;
   payments?: Payment[];
   createdAt: string;
@@ -124,7 +127,7 @@ export interface Payment {
   billId: number | null;
   billNumber?: string | null;
   amount: string;
-  paymentMethod: 'cash' | 'upi' | 'bank_transfer' | 'other';
+  paymentMethod: "cash" | "upi" | "bank_transfer" | "other";
   referenceNumber: string | null;
   notes: string | null;
   createdAt: string;
@@ -136,7 +139,7 @@ export interface LedgerEntry {
   customerId: number;
   customerName?: string;
   customerMobile?: string;
-  referenceType: 'opening_balance' | 'bill' | 'payment' | 'adjustment';
+  referenceType: "opening_balance" | "bill" | "payment" | "adjustment";
   referenceId: number | null;
   voucherNumber: string | null;
   description: string;
@@ -148,11 +151,11 @@ export interface LedgerEntry {
 
 export interface LedgerSummary {
   openingBalance: string;
-  openingBalanceType: 'dr' | 'cr';
+  openingBalanceType: "dr" | "cr";
   totalDebit: string;
   totalCredit: string;
   closingBalance: string;
-  closingBalanceType: 'dr' | 'cr';
+  closingBalanceType: "dr" | "cr";
 }
 
 export interface DashboardData {
@@ -166,7 +169,7 @@ export interface DashboardData {
     date: string;
     customer: string;
     reference: string;
-    type: 'bill' | 'payment';
+    type: "bill" | "payment";
     amount: string;
     status: string;
   }>;

@@ -11,8 +11,21 @@ const { Pool } = pg;
 const __dirname = path.dirname(fileURLToPath(import.meta.url));
 
 async function runMigrations() {
+  const isProduction = process.env.NODE_ENV === 'production';
+  const requiresSsl =
+    process.env.DATABASE_SSL === 'true' ||
+    (process.env.DATABASE_SSL !== 'false' &&
+      (process.env.DATABASE_URL?.includes('sslmode=require') ||
+        process.env.DATABASE_URL?.includes('render.com') ||
+        process.env.DATABASE_URL?.includes('supabase.co') ||
+        process.env.DATABASE_URL?.includes('neon.tech') ||
+        (isProduction &&
+          !process.env.DATABASE_URL?.includes('localhost') &&
+          !process.env.DATABASE_URL?.includes('127.0.0.1'))));
+
   const pool = new Pool({
     connectionString: process.env.DATABASE_URL,
+    ...(requiresSsl ? { ssl: { rejectUnauthorized: false } } : {}),
   });
 
   const db = drizzle(pool);

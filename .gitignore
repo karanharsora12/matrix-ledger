@@ -18,6 +18,7 @@ build/
 out/
 client/dist/
 server/dist/
+.vercel/
 
 # TypeScript compiler cache
 *.tsbuildinfo
